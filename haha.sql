@@ -296,9 +296,38 @@ select *
 from sale_item
 
 15.查询公司中王姓员工的信息
+
+select * 
+from employee
+where emp_name like '王%'
+
 16.查询公司中所有姓名有三个字的员工信息
+
+select * 
+from employee
+where emp_name like '___'
+
 17.查询公司员工的平均年龄
+
+select avg(DATEDIFF(year,birthday,getdate())) as avg_age
+from employee
+
+
 18.查询所有产品信息，并按产品编号升序排列
+
+select *
+from product
+order by prod_id
+
 19.查询所供应商信息，并供应商名称降序排列
+
+select *
+from supply
+order by sup_name DESC
+
 20.查询1996年10的采购总金额
+
+select * 
+from
+
 */
