@@ -204,9 +204,7 @@ INSERT INTO SUPPLY VALUES('S0004','联华电子')
 /*
 请写出下列要求的sql语句
 1.按公司客户所在地来统计销售总额
-
 select * from customer
-
 select * from sales
 
 
@@ -216,19 +214,14 @@ where sales.cus_id=customer.cus_id
 group by addr
 
 2.查询公司从96年8月开始单价超过2000块的采购单号和供应商
-
 select pur_no, sup_id from pur_item
 where year(pur_date) >= 1996 and month(pur_date) >= 8 and unit_price >= 2000
-
 3.查询公司目前库存商品的名称和数量
-
 select prod_name, count(prod_name) as sum
 from stock, product
 where stock.prod_id = product.prod_id
 group by prod_name
-
 4.查询公司采购金额超过10万的定单信息（包括 定单号厂家 商品名）
-
 select * from pur_item
 select * from supply
 select * from product
@@ -236,80 +229,147 @@ select * from product
 select *
 from pur_item, supply, product
 where pur_item.sup_id=supply.sup_id and product.prod_id=pur_item.prod_id and qty*unit_price >= 100000
-
 5.查询库存量前三名的产品名称
-
 select * from stock
-
 select top 3 prod_name, stk_qty
 from stock, product
 where stock.prod_id=product.prod_id
 order by stk_qty DESC
-
-
 6.查询库存商品销售金额在第三到第六的供货商的信息
-
 select * from stock
 select * from sale_item
 select * from supply
-
 select top 4 sup_name, qty * unit_price as sum
 from(select top 6 sup_name, qty * unit_price as sum, qty, unit_price
 from stock, sale_item, supply
 where stock.prod_id=sale_item.prod_id and sale_item.sup_id=supply.sup_id
 order by (qty * unit_price) DESC) as T
 order by (T.qty * T.unit_price)
-
 7.查询同一类型产品有两家以上供货商的产品编号以及供货商的数量
-
 select * from product
 select * from stock
 select * from supply
-
 select prod_id, count(prod_id) as sup_num
 from stock
 group by prod_id having count(prod_id) >= 2
-
 8.统计公司各种产品的销售金额（需要区分不同的厂家）
 
-select prod_id, sup_id, qty * unit_price as toa_amt
- from sale_item
+select prod_name, sup_name, qty * unit_price as toa_amt
+from sale_item, product, supply
+where product.prod_id = sale_item.prod_id and supply.sup_id =  sale_item.sup_id
+order by sup_name
 
 9.查询公司在96年10月的定单，计算每日定单金额，并按照定单金额排序
-
 select order_date, sum(qty * unit_price) as amt
 from sale_item
 where year(order_date) = 1996 and month(order_date) = 10
 group by order_date
 order by amt
-
 10.查询一笔销售记录中包含有两条明细记录的销售总帐记录
-
-
-
 select * 
 from sales
 where order_no in (select order_no
 from sale_item
 group by order_no having count(order_no) = 2
 )
-
 11.查询销售总表和销售明细表中不符合参照关系的数据（定单编号为参照字段）。
 
 select * from sales
 select * from sale_item
 
+select * 
+from sales s1
+where not exists(select order_no from sale_item s2 where s1.order_no = s2.order_no)
+
 12.查询每个员工的工资以及应该交纳的个人所得税金额（40000以下不交，40000---49999 5%   50000—59999 7% 60000以上 10%）
+
+select emp_name, salary, case 
+			when salary < 40000 then 0
+            when salary >= 40000 and salary <= 49999 then salary * 0.05
+			when salary >= 50000 and salary <= 59999 then salary * 0.07
+			when salary >= 60000 then salary * 0.1
+            else 0 end as tax
+from employee
+
 13.生成公司销售的明细表要求表中需要表现的信息为（定单号，销售员姓名，销售产品，供伙商名称，销售金额）
+
+select * from employee
+select * from sales
+
+select sale_item.order_no, emp_name, prod_name, sup_name, toa_amt
+from sale_item, employee, sales, product, supply
+where sale_item.order_no = sales.order_no and employee.emp_no = sales.sale_id and sale_item.prod_id = product.prod_id and sale_item.sup_id = supply.sup_id
+
 14.在采购明细表中查询 同类产品在不同时间进货差价超过200元的产品及供货商名称
+
+select prod_name, sup_name
+from pur_item p1, pur_item p2, supply, product
+where p1.pur_no != p2.pur_no and p1.pur_date = p2.pur_date and p1.prod_id = p2.prod_id and abs(p1.unit_price - p2.unit_price) >= 200
+and p1.prod_id = product.prod_id and p1.sup_id = supply.sup_id
+
+
 15.查询在同一天进入公司的员工信息
+
+select * from employee
+
+select * 
+from employee e1, employee e2
+where e1.date_hired = e2.date_hired and e1.emp_no != e2.emp_no
+order by e2.date_hired
+
 16.查询公司所有客户在公司的定货情况
+
+select * 
+from customer, sales
+where customer.cus_id = sales.cus_id
+
 17.查询由公司女业务员所接回的定单
+
+select * 
+from sales, employee
+where sales.sale_id = employee.emp_no and sex = 'F'
+
 18.查询公司中姓名相同的员工并按照员工编号显示员工信息
+
+select * 
+from employee e1, employee e2
+where e1.emp_name = e2.emp_name and e1.emp_no != e2.emp_no
+order by e1.emp_no
+
 19.查询公司中目前业绩还没有超过2万的业务员
+
+select * from employee
+where emp_name not in
+(
+select emp_name
+from employee, sales
+where emp_no = sale_id and toa_amt > 20000
+)
+
 20.查询仓库中还没有销售过的产品信息
+
+select * from sale_item
+select * from stock
+
+select * 
+from stock, product
+where stock.prod_id not in (
+	select sale_item.prod_id from sale_item
+) and stock.prod_id = product.prod_id
+
 21.查询没有在公司订购产品的客户名单
+
+select * from customer
+where customer.cus_id not in (
+	select sales.cus_id from sales
+)
+
 22.按照供货商来统计公司的销售榜
+
+select * 
+from sales, sale_item
+where sales.order_no = sale_item.order_no
+order by sup_id
 
 请提交所有SQL语句以及看得出实验过程含有总结和体会的实验报告
 */
