@@ -37,3 +37,25 @@ sno    char(2),
 cno   char(2),
 score   tinyint
 )
+
+
+
+-- 1
+create view SCORE_VIEW
+as 
+select s.sno, sn, c.cn, score 
+from s, sc, c
+where s.sno = sc.sno and sc.cno = c.cno
+-- 2
+create view S_VIEW
+as
+select sno, sn,sex
+from s
+-- 3
+insert into s values(9991102, 'jack')
+
+sno   char(2),
+sn char(8),
+sex char(2),
+age tinyint,
+dept char(10)
